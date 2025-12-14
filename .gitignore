@@ -5,7 +5,7 @@ __pycache__/
 
 # Custom Ignores
 data
-
+extras
 
 
 # C extensions

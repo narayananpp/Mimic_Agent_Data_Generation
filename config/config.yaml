@@ -1,0 +1,13 @@
+mode: "static"  # "walking", "skating", "static"
+robot: "go2w"  # "go2"
+plot: False
+record: False   # Do you want to record the frames or simply test
+record_cycles : 2  # Number of gait freq cycles you want to record for  ( for skating 2 * gait_freq = 1 skating cycle)
+init_position: "home"  # "handstand", "home"
+skating_style: "diagonal_sync" # handstand_alt, front_alt, front_sync, back_alt, back_sync, diagonal_sync, diagonal_sync
+base_velocity: 0.0
+yaw_rate : 0.5
+step_length : 0.4
+step_height : 0.15
+gait_freq : 1.5 # The gait cycle for one leg
+sim_freq : 200  # The FPS ate which the data is collected
