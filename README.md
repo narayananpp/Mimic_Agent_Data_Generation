@@ -1,6 +1,6 @@
 # Go2 Kinematic Gait & Skating Motion Generator (MuJoCo + MimicKit)
 
-This repository provides a **kinematic Walking and Skating gait motion generator**  for the **Unitree Go2 and Go2W** robot using **MuJoCo**, **inverse kinematics**, and **procedural gait controllers**. The generated animated motions are exported in **MimicKit-compatible format** (`.pkl`) for downstream reinforcement learning using DeepMimic and other methods for getting a policy that generate similar but dynamically feasible motion.
+#### This repository provides a **kinematic Walking and Skating gait motion generator**  for the **Unitree Go2 and Go2W** robot using **MuJoCo**, **inverse kinematics**, and **procedural gait controllers**. The generated animated motions are exported in **MimicKit-compatible format** (`.pkl`) for downstream reinforcement learning using DeepMimic and other methods for getting a policy that generate similar but dynamically feasible motion.
 ---
 
 ## Features
