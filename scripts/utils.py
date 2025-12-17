@@ -3,6 +3,16 @@ import mujoco
 # ----------------------------
 # Utility: body frame transform
 # ----------------------------
+
+from scipy.spatial.transform import Rotation as R
+
+def euler_to_quat(roll=0, pitch=0, yaw=0):
+    """Convert Euler angles to quaternion (w, x, y, z)"""
+    r = R.from_euler('xyz', [roll, pitch, yaw])
+    q = r.as_quat()  # (x,y,z,w)
+    return np.array([q[3], q[0], q[1], q[2]])  # convert to w,x,y,z
+
+
 def world_to_body(model, data, point_world):
     """Convert a 3D point from world frame to body frame."""
     trunk_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "base_link")
@@ -125,3 +135,10 @@ def quat_to_exp_map(q):
     """
     axis, angle = quat_to_axis_angle(q)
     return axis_angle_to_exp_map(axis, angle)
+
+
+def rotate_about_z(p, center_xy, dtheta):
+    c, s = np.cos(dtheta), np.sin(dtheta)
+    R = np.array([[c, -s], [s, c]])
+    v = p[:2] - center_xy
+    p[:2] = center_xy + R @ v

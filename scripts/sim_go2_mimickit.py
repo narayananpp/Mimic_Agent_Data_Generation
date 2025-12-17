@@ -281,6 +281,15 @@ def main():
                     step_height=step_height,
                     style=skating_style
                 )
+
+    elif mode == "backflip":
+        print("Backflip Controller Initialized")
+        gait = BackflipGaitController(
+            base_init_feet_pos=base_feet,
+            total_time=record_cycles / gait_freq,  # duration of backflip
+            step_height=0.05
+        )
+
     # --------------------------------
     # One gait cycle duration
     # --------------------------------
@@ -313,8 +322,12 @@ def main():
         target_feet_pos = initial_feet_pos.copy()
         qpos = data.qpos.copy()
         _, _, yaw = quat_to_euler(qpos[3:7])
-        gait.set_base_init_feet_pos(vx=base_velocity, yaw=yaw, dt=dt)
-        
+        gait.set_base_init_feet_pos(vx=base_velocity, yaw=yaw, dt=dt, yaw_rate=yaw_rate)
+
+        if mode == "backflip":
+            data.qpos[2] = gait.com_height(t)  # base height dynamically
+            data.qpos[3:7] = gait.base_orientation(t)  # rotate base
+
         for i, n in enumerate(body_names):
             if mode=="skating":               
                 target_feet_pos[i] = gait.foot_target(n, t)
@@ -322,6 +335,10 @@ def main():
 
             elif mode=="walking":
                 target_feet_pos[i] = gait.foot_target(n, t, mode="moving")
+
+            elif mode=="backflip":
+                target_feet_pos[i] = gait.foot_target(n, t)
+
             else:
                 target_feet_pos[i] = gait.foot_target(n, t, mode="static")
 
@@ -351,7 +368,7 @@ def main():
         frames_qpos.append(qpos)
 
         # Root pose
-        root_pos = qpos[0:3] + delta_vector(vx=base_velocity, theta=yaw, dt=dt)
+        root_pos = qpos[0:3] + delta_vector(vx=base_velocity, theta=yaw, dt=dt, yaw_rate=yaw_rate)
         root_orientation = integrate_yaw(qpos[3:7], yaw_rate, dt)
 
         # Convert MuJoCo (w,x,y,z) → MimicKit order (x,y,z,w)
