@@ -35,5 +35,9 @@ def get_args(default_config_path="config/config.yaml"):
 
     parser.add_argument("--skating_style", type=str, default=cfg["skating"]["style"])
 
+    parser.add_argument("--vx", type=float, default=0.0, help="Base linear velocity X (m/s)")
+    parser.add_argument("--vy", type=float, default=0.0, help="Base linear velocity Y (m/s)")
+    parser.add_argument("--vz", type=float, default=0.0, help="Base linear velocity Z (m/s)")
+
     return parser.parse_args()
 

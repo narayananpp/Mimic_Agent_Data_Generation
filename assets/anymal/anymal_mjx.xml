@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco model="anymal">
+  <compiler angle="radian" meshdir="assets" autolimits="true"/>
+
+  <option cone="pyramidal" impratio="100" iterations="1" ls_iterations="5">
+    <flag eulerdamp="disable"/>
+  </option>
+
+  <default>
+    <default class="anymal">
+      <geom friction="0.8" margin="0.001" condim="1"/>
+      <joint axis="0 1 0" damping="2" armature="0.01"/>
+      <general forcerange="-80 80" biastype="affine" gainprm="50 0 0" biasprm="0 -50 -0.5"/>
+
+      <default class="haa">
+        <joint axis="1 0 0"/>
+      </default>
+
+      <default class="hfe">
+        <joint axis="1 0 0" range="-9.42477796077 9.42477796077"/>
+        <general ctrlrange="-9.32477796077 9.32477796077"/>
+      </default>
+
+      <default class="kfe">
+        <joint axis="1 0 0" range="-9.42477796077 9.42477796077"/>
+        <general ctrlrange="-9.32477796077 9.32477796077"/>
+      </default>
+
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+
+      <default class="anymal_foot">
+        <site group="1" pos="0 0 0.0225"/>
+        <geom rgba="0.2 0.2 0.2 1"/>
+      </default>
+
+      <default class="collision">
+        <geom group="3"/>
+        <default class="foot">
+          <geom size="0.03" pos="0 0 0.0225" priority="1" solimp="0.015 1 0.031" condim="6"
+            friction="0.8 0.02 0.01"/>
+        </default>
+      </default>
+    </default>
+  </default>
+
+  <asset>
+    <material name="metal" rgba="0.7 0.7 0.75 1"/>
+    <material name="black" rgba="0.1 0.1 0.1 1"/>
+    <material name="gray" rgba="0.5 0.5 0.5 1"/>
+    <material name="dark_gray" rgba="0.3 0.3 0.3 1"/>
+    <material name="orange" rgba="1 0.5 0 1"/>
+
+    <!-- Mesh files -->
+    <mesh file="base.dae"/>
+    <mesh file="top_shell.dae"/>
+    <mesh file="bottom_shell.dae"/>
+    <mesh file="remote.dae"/>
+    <mesh file="handle.dae"/>
+    <mesh file="face.dae"/>
+    <mesh file="battery.dae"/>
+    <mesh file="drive.dae"/>
+    <mesh file="hip_l.dae"/>
+    <mesh file="hip_r.dae"/>
+    <mesh file="thigh.dae"/>
+    <mesh file="shank_l.dae"/>
+    <mesh file="shank_r.dae"/>
+    <mesh file="foot.dae"/>
+    <mesh file="depth_camera.dae"/>
+    <mesh file="wide_angle_camera.dae"/>
+    <mesh file="lidar_cage.dae"/>
+    <mesh file="lidar.dae"/>
+  </asset>
+
+  <worldbody>
+    <body name="base" pos="0 0 0.5" childclass="anymal">
+      <camera name="track" pos="1.2 -2.0 1.0" xyaxes="0.866 0.500 0.000 -0.171 0.296 0.940" mode="trackcom"/>
+
+      <!-- Combined base inertia -->
+      <inertial pos="-0.018 -0.002 0.024" mass="6.222"
+                diaginertia="0.372497653 0.370887745 0.017938806"/>
+
+      <freejoint/>
+
+      <!-- Base visual -->
+      <geom mesh="base" material="gray" class="visual"/>
+      <geom mesh="top_shell" material="gray" class="visual"/>
+      <geom mesh="bottom_shell" material="gray" class="visual"/>
+      <geom mesh="remote" material="black" class="visual"/>
+      <geom mesh="handle" material="metal" class="visual"/>
+      <geom mesh="battery" material="black" class="visual"/>
+
+      <!-- Base collision - simplified -->
+      <geom size="0.09 0.07 0.09" class="collision"/>
+      <geom size="0.05 0.045" pos="0.285 0 0.01" class="collision"/>
+      <geom size="0.047" pos="0.293 0 -0.06" class="collision"/>
+
+      <!-- IMU sensor location -->
+      <site name="imu" pos="0.2488 0.00835 0.04628" quat="0.707107 0 0 0.707107"/>
+
+      <!-- Front faces -->
+      <body name="face_front" pos="0.4145 0 0">
+        <inertial pos="0.042 -0.001 0.004" mass="0.73"
+                  diaginertia="0.005238611 0.004325938 0.002643098"/>
+        <geom mesh="face" material="gray" class="visual"/>
+        <geom size="0.055 0.07 0.09" type="box" pos="0.055 0 0" class="collision"/>
+      </body>
+
+      <body name="face_rear" pos="-0.4145 0 0" quat="0 0 1 0">
+        <inertial pos="0.042 -0.001 0.004" mass="0.73"
+                  diaginertia="0.005238611 0.004325938 0.002643098"/>
+        <geom mesh="face" material="gray" class="visual"/>
+        <geom size="0.055 0.07 0.09" type="box" pos="0.055 0 0" class="collision"/>
+      </body>
+
+      <!-- LF Leg (Left Front) -->
+      <body name="LF_hip" pos="0.2999 0.104 0">
+        <inertial pos="-0.063 0.00007 0.00046" mass="2.04"
+                  diaginertia="0.001805509 0.001765827 0.001053013"/>
+        <joint name="LF_hip_joint" class="haa" range="-0.72 0.49"/>
+        <geom mesh="drive" material="metal" class="visual" euler="0 0 2.61799387799"/>
+        <geom size="0.046 0.02" pos="0 0.08 0" quat="1 1 0 0" class="collision"/>
+
+        <body name="LF_thigh" pos="0 0.0955 0">
+          <inertial pos="0.0 0.018 -0.169" mass="1.03"
+                    diaginertia="0.019312599 0.018644469 0.002838361"/>
+          <joint name="LF_thigh_joint" class="hfe"/>
+          <geom mesh="hip_l" material="gray" class="visual"/>
+          <geom mesh="thigh" material="gray" class="visual"/>
+          <geom size="0.017 0.01225 0.017" pos="0 0.03 -0.1955" quat="0.707107 0 0.707107 0" class="collision"/>
+
+          <body name="LF_calf" pos="0 0 -0.285">
+            <inertial pos="0.03463 0.00688 0.00098" mass="0.33742"
+                      diaginertia="0.00110974122 0.00089388521 0.00032748005"/>
+            <joint name="LF_calf_joint" class="kfe"/>
+            <geom mesh="drive" material="metal" class="visual" euler="0 0 1.57079632679"/>
+            <geom mesh="shank_l" material="gray" class="visual"/>
+            <geom size="0.012 0.06" pos="0.008 0 -0.06" quat="0.994493 0 -0.104807 0" class="collision"/>
+            <geom size="0.011 0.0325" pos="0.02 0 -0.148" quat="0.999688 0 0.0249974 0" class="collision"/>
+            <geom pos="0 0 -0.213" mesh="foot" class="visual" material="black" euler="0 0 -0.785398163397"/>
+            <geom name="LF" class="foot"/>
+            <site name="LF_foot" class="anymal_foot"/>
+          </body>
+        </body>
+      </body>
+
+      <!-- RF Leg (Right Front) -->
+      <body name="RF_hip" pos="0.2999 -0.104 0">
+        <inertial pos="-0.063 0.00007 0.00046" mass="2.04"
+                  diaginertia="0.001805509 0.001765827 0.001053013"/>
+        <joint name="RF_hip_joint" class="haa" range="-0.49 0.72"/>
+        <geom mesh="drive" material="metal" class="visual" euler="0 0 -2.61799387799"/>
+        <geom size="0.046 0.02" pos="0 -0.08 0" quat="0.707107 0.707107 0 0" class="collision"/>
+
+        <body name="FR_thigh" pos="0 -0.0955 0">
+          <inertial pos="0.0 -0.018 -0.169" mass="1.03"
+                    diaginertia="0.019312599 0.018644469 0.002838361"/>
+          <joint name="FR_thigh_joint" class="hfe"/>
+          <geom mesh="hip_r" material="gray" class="visual"/>
+          <geom mesh="thigh" material="gray" class="visual" quat="0 0 0 1"/>
+          <geom size="0.017 0.01225 0.017" pos="0 -0.03 -0.1955" quat="0.707107 0 0.707107 0" class="collision"/>
+
+          <body name="FR_calf" pos="0 0 -0.285">
+            <inertial pos="0.03463 -0.00688 0.00098" mass="0.33742"
+                      diaginertia="0.00110974122 0.00089388521 0.00032748005"/>
+            <joint name="FR_calf_joint" class="kfe"/>
+            <geom mesh="drive" material="metal" class="visual" euler="0 0 -1.57079632679"/>
+            <geom mesh="shank_r" material="gray" class="visual"/>
+            <geom size="0.013 0.06" pos="0.01 0 -0.06" quat="0.995004 0 -0.0998334 0" class="collision"/>
+            <geom size="0.011 0.0325" pos="0.02 0 -0.148" quat="0.999688 0 0.0249974 0" class="collision"/>
+            <geom pos="0 0 -0.213" mesh="foot" class="visual" material="black" euler="0 0 0.785398163397"/>
+            <geom name="FR" class="foot"/>
+            <site name="FR_foot" class="anymal_foot"/>
+          </body>
+        </body>
+      </body>
+
+      <!-- LH Leg (Left Hind) -->
+      <body name="LH_hip" pos="-0.2999 0.104 0">
+        <inertial pos="-0.063 0.00007 0.00046" mass="2.04"
+                  diaginertia="0.001805509 0.001765827 0.001053013"/>
+        <joint name="LH_hip_joint" class="haa" range="-0.72 0.49"/>
+        <geom mesh="drive" material="metal" class="visual" euler="0 0 -2.61799387799"/>
+        <geom size="0.046 0.02" pos="0 0.08 0" quat="0.707107 0.707107 0 0" class="collision"/>
+
+        <body name="RL_thigh" pos="0 0.0955 0">
+          <inertial pos="-0.0 0.018 -0.169" mass="1.03"
+                    diaginertia="0.019312599 0.018644469 0.002838361"/>
+          <joint name="RL_thigh_joint" class="hfe"/>
+          <geom mesh="hip_r" material="gray" class="visual" quat="0 0 0 1"/>
+          <geom mesh="thigh" material="gray" class="visual"/>
+          <geom size="0.017 0.01225 0.017" pos="0 0.03 -0.1955" quat="0.707107 0 0.707107 0" class="collision"/>
+
+          <body name="RL_calf" pos="0 0 -0.285">
+            <inertial pos="-0.03463 0.00688 0.00098" mass="0.33742"
+                      diaginertia="0.00110974122 0.00089388521 0.00032748005"/>
+            <joint name="RL_calf_joint" class="kfe"/>
+            <geom mesh="drive" material="metal" class="visual" euler="0 0 1.57079632679"/>
+            <geom mesh="shank_r" material="gray" class="visual" quat="0 0 0 1"/>
+            <geom size="0.013 0.06" pos="0.01 0 -0.06" quat="0.995004 0 -0.0998334 0" class="collision"/>
+            <geom size="0.011 0.0325" pos="0.02 0 -0.148" quat="0.999688 0 0.0249974 0" class="collision"/>
+            <geom pos="0 0 -0.213" mesh="foot" class="visual" material="black" euler="0 0 -2.35619449019"/>
+            <geom name="RL" class="foot"/>
+            <site name="RL_foot" class="anymal_foot"/>
+          </body>
+        </body>
+      </body>
+
+      <!-- RH Leg (Right Hind) -->
+      <body name="RH_hip" pos="-0.2999 -0.104 0">
+        <inertial pos="-0.063 0.00007 0.00046" mass="2.04"
+                  diaginertia="0.001805509 0.001765827 0.001053013"/>
+        <joint name="RH_hip_joint" class="haa" range="-0.49 0.72"/>
+        <geom mesh="drive" material="metal" class="visual" euler="0 0 2.61799387799"/>
+        <geom size="0.046 0.02" pos="0 -0.08 0" quat="0.707107 0.707107 0 0" class="collision"/>
+
+        <body name="RR_thigh" pos="0 -0.0955 0">
+          <inertial pos="-0.0 -0.018 -0.169" mass="1.03"
+                    diaginertia="0.019312599 0.018644469 0.002838361"/>
+          <joint name="RR_thigh_joint" class="hfe"/>
+          <geom mesh="hip_l" material="gray" class="visual" quat="0 0 0 1"/>
+          <geom mesh="thigh" material="gray" class="visual" quat="0 0 0 1"/>
+          <geom size="0.017 0.01225 0.017" pos="0 -0.03 -0.1955" quat="0.707107 0 0.707107 0" class="collision"/>
+
+          <body name="RR_calf" pos="0 0 -0.285">
+            <inertial pos="-0.03463 -0.00688 0.00098" mass="0.33742"
+                      diaginertia="0.00110974122 0.00089388521 0.00032748005"/>
+            <joint name="RR_calf_joint" class="kfe"/>
+            <geom mesh="drive" material="metal" class="visual" euler="0 0 -1.57079632679"/>
+            <geom mesh="shank_l" material="gray" class="visual" quat="0 0 0 1"/>
+            <geom size="0.013 0.06" pos="0.01 0 -0.06" quat="0.995004 0 -0.0998334 0" class="collision"/>
+            <geom size="0.011 0.0325" pos="0.02 0 -0.148" quat="0.999688 0 0.0249974 0" class="collision"/>
+            <geom pos="0 0 -0.213" mesh="foot" class="visual" material="black" euler="0 0 -3.92699081699"/>
+            <geom name="RR" class="foot"/>
+            <site name="RR_foot" class="anymal_foot"/>
+          </body>
+        </body>
+      </body>
+
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- LF leg actuators -->
+    <general class="haa" name="LF_hip" joint="LF_hip_joint" ctrlrange="-0.62 0.39"/>
+    <general class="hfe" name="LF_thigh" joint="LF_thigh_joint"/>
+    <general class="kfe" name="LF_calf" joint="LF_calf_joint"/>
+
+    <!-- RF leg actuators -->
+    <general class="haa" name="RF_hip" joint="RF_hip_joint" ctrlrange="-0.39 0.62"/>
+    <general class="hfe" name="FR_thigh" joint="FR_thigh_joint"/>
+    <general class="kfe" name="FR_calf" joint="FR_calf_joint"/>
+
+    <!-- LH leg actuators -->
+    <general class="haa" name="LH_hip" joint="LH_hip_joint" ctrlrange="-0.62 0.39"/>
+    <general class="hfe" name="RL_thigh" joint="RL_thigh_joint"/>
+    <general class="kfe" name="RL_calf" joint="RL_calf_joint"/>
+
+    <!-- RH leg actuators -->
+    <general class="haa" name="RH_hip" joint="RH_hip_joint" ctrlrange="-0.39 0.62"/>
+    <general class="hfe" name="RR_thigh" joint="RR_thigh_joint"/>
+    <general class="kfe" name="RR_calf" joint="RR_calf_joint"/>
+  </actuator>
+
+  <sensor>
+    <jointpos joint="LF_hip_joint" name="abduction_front_left_pos"/>
+    <jointpos joint="LF_thigh_joint" name="hip_front_left_pos"/>
+    <jointpos joint="LF_calf_joint" name="knee_front_left_pos"/>
+    <jointpos joint="LH_hip_joint" name="abduction_hind_left_pos"/>
+    <jointpos joint="RL_thigh_joint" name="hip_hind_left_pos"/>
+    <jointpos joint="RL_calf_joint" name="knee_hind_left_pos"/>
+    <jointpos joint="RF_hip_joint" name="abduction_front_right_pos"/>
+    <jointpos joint="FR_thigh_joint" name="hip_front_right_pos"/>
+    <jointpos joint="FR_calf_joint" name="knee_front_right_pos"/>
+    <jointpos joint="RH_hip_joint" name="abduction_hind_right_pos"/>
+    <jointpos joint="RR_thigh_joint" name="hip_hind_right_pos"/>
+    <jointpos joint="RR_calf_joint" name="knee_hind_right_pos"/>
+
+    <jointvel joint="LF_hip_joint" name="abduction_front_left_vel"/>
+    <jointvel joint="LF_thigh_joint" name="hip_front_left_vel"/>
+    <jointvel joint="LF_calf_joint" name="knee_front_left_vel"/>
+    <jointvel joint="LH_hip_joint" name="abduction_hind_left_vel"/>
+    <jointvel joint="RL_thigh_joint" name="hip_hind_left_vel"/>
+    <jointvel joint="RL_calf_joint" name="knee_hind_left_vel"/>
+    <jointvel joint="RF_hip_joint" name="abduction_front_right_vel"/>
+    <jointvel joint="FR_thigh_joint" name="hip_front_right_vel"/>
+    <jointvel joint="FR_calf_joint" name="knee_front_right_vel"/>
+    <jointvel joint="RH_hip_joint" name="abduction_hind_right_vel"/>
+    <jointvel joint="RR_thigh_joint" name="hip_hind_right_vel"/>
+    <jointvel joint="RR_calf_joint" name="knee_hind_right_vel"/>
+
+    <gyro site="imu" name="gyro"/>
+    <accelerometer site="imu" name="accelerometer"/>
+    <framequat objtype="site" objname="imu" name="orientation"/>
+    <framepos objtype="site" objname="imu" name="global_position"/>
+    <framelinvel objtype="site" objname="imu" name="global_linvel"/>
+    <frameangvel objtype="site" objname="imu" name="global_angvel"/>
+  </sensor>
+
+  <keyframe>
+    <key name="home"
+         qpos="0 0 0.5 1 0 0 0
+               0 0.8 -1.6 0 0.8 -1.6
+               0 0.8 -1.6 0 0.8 -1.6"
+         ctrl="0 0.8 -1.6 0 0.8 -1.6
+               0 0.8 -1.6 0 0.8 -1.6"/>
+  </keyframe>
+</mujoco>

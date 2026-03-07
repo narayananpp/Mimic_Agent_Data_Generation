@@ -1,0 +1,48 @@
+# robots/spot.yaml
+# Boston Dynamics Spot
+# XML leg order: fl (front-left), fr (front-right), hl (rear-left), hr (rear-right)
+# Canonical mapping:  fl→FL,  fr→FR,  hl→RL,  hr→RR
+
+name: spot
+scene_xml: assets/spot/scene.xml
+base_body: body
+
+# IK target bodies — lower leg bodies, in canonical FL/FR/RL/RR order
+calf_bodies:
+  - fl_lleg
+  - fr_lleg
+  - hl_lleg
+  - hr_lleg
+
+# Spot's feet are geoms named FL/FR/HL/HR, not sites or bodies.
+# No dedicated foot site exists — IK will use the lleg body positions.
+# Set these to empty so kinematics falls back to calf body positions.
+foot_sites:
+  - fl_lleg
+  - fr_lleg
+  - hl_lleg
+  - hr_lleg
+
+# All actuated joints in XML order
+joint_names:
+  - fl_hx
+  - fl_hy
+  - fl_kn
+  - fr_hx
+  - fr_hy
+  - fr_kn
+  - hl_hx
+  - hl_hy
+  - hl_kn
+  - hr_hx
+  - hr_hy
+  - hr_kn
+
+# Canonical order matching calf_bodies above
+leg_order:
+  - FL   # fl_lleg
+  - FR   # fr_lleg
+  - RL   # hl_lleg
+  - RR   # hr_lleg
+
+wheel_radius: 0.0

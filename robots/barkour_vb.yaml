@@ -1,0 +1,42 @@
+# robots/barkour_vb.yaml
+name: barkour_vb
+scene_xml: assets/barkour_vb/scene.xml
+base_body: torso
+
+# The segments used for IK targets (mapped to canonical FL, FR, RL, RR)
+calf_bodies:
+  - lower_leg_front_left
+  - lower_leg_3           # XML name for front_right lower leg
+  - lower_leg_2           # XML name for hind_left lower leg
+  - lower_leg_4           # XML name for hind_right lower leg
+
+# Foot contact sites for gait sensors
+foot_sites:
+  - foot_front_left
+  - foot_front_right
+  - foot_hind_left
+  - foot_hind_right
+
+# Actuated joints in the exact order found in <actuator>
+joint_names:
+  - abduction_front_left
+  - hip_front_left
+  - knee_front_left
+  - abduction_hind_left
+  - hip_hind_left
+  - knee_hind_left
+  - abduction_front_right
+  - hip_front_right
+  - knee_front_right
+  - abduction_hind_right
+  - hip_hind_right
+  - knee_hind_right
+
+leg_order: [FL, FR, RL, RR]
+wheel_radius: 0.0
+
+extra:
+  # Barkour VB specific defaults from the XML
+  kp: 50
+  kd: 0.5
+  mass: 6.04  # Torso mass only

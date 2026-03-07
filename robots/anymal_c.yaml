@@ -1,0 +1,54 @@
+# robots/anymal_c.yaml
+name: anymal_c
+scene_xml: assets/anymal_c/scene.xml
+base_body: base
+
+# The IK solver needs the bodies that move (the shanks)
+calf_bodies:
+  - LF_SHANK
+  - RF_SHANK
+  - LH_SHANK
+  - RH_SHANK
+
+# IMPORTANT: Since there are no <site> tags for feet in your XML,
+# and the SHANK origin is the KNEE, we must define the foot offsets.
+# If your controller supports site offsets, use these:
+foot_offsets:
+  LF: [0.01305, -0.08795, -0.31547]
+  RF: [0.01305, 0.08795, -0.31547]
+  LH: [0.01305, 0.08795, -0.31547]
+  RH: [0.01305, -0.08795, -0.31547]
+
+joint_names:
+  - LF_HAA
+  - LF_HFE
+  - LF_KFE
+  - RF_HAA
+  - RF_HFE
+  - RF_KFE
+  - LH_HAA
+  - LH_HFE
+  - LH_KFE
+  - RH_HAA
+  - RH_HFE
+  - RH_KFE
+
+leg_order: [FL, FR, RL, RR]
+
+# ANYmal C specific motor parameters from your XML class "affine"
+extra:
+  kp: 100
+  joint_direction_corrections:
+    RF_HFE: -1
+    RF_KFE: -1
+    LH_HAA: -1
+    RH_HAA: -1
+    RH_HFE: -1
+    RH_KFE: -1
+
+
+foot_sites:
+  - LF_FOOT
+  - RF_FOOT
+  - LH_FOOT
+  - RH_FOOT

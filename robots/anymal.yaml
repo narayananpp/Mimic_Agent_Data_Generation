@@ -1,0 +1,48 @@
+# robots/anymal.yaml
+# ANYmal quadruped (legged_systems ANYmal C)
+# Leg naming in XML: LF / RF / LH / RH
+# These are automatically mapped to canonical FL / FR / RL / RR by robot_config.py
+
+name: anymal
+scene_xml: assets/anymal/scene.xml
+base_body: base
+
+# IK target bodies — in canonical FL/FR/RL/RR order
+# LF=FL, RF=FR, LH=RL, RH=RR
+calf_bodies:
+  - LF_shank
+  - RF_shank
+  - LH_shank
+  - RH_shank
+
+# ANYmal has foot BODIES (not sites) — kinematics.py will fall back to body position
+foot_sites:
+  - LF_foot
+  - RF_foot
+  - LH_foot
+  - RH_foot
+
+# All actuated joints in the model
+# ANYmal uses HAA (abduction), HFE (hip flex/ext), KFE (knee flex/ext)
+joint_names:
+  - LF_HAA
+  - LF_HFE
+  - LF_KFE
+  - RF_HAA
+  - RF_HFE
+  - RF_KFE
+  - LH_HAA
+  - LH_HFE
+  - LH_KFE
+  - RH_HAA
+  - RH_HFE
+  - RH_KFE
+
+# Canonical order matching calf_bodies above
+leg_order:
+  - FL   # ← LF_shank
+  - FR   # ← RF_shank
+  - RL   # ← LH_shank
+  - RR   # ← RH_shank
+
+wheel_radius: 0.0
