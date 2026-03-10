@@ -4,7 +4,7 @@
 
 name: unitree_go2w
 scene_xml: assets/unitree_go2w/scene.xml
-base_body: base
+base_body: base_link
 
 # IK target bodies
 calf_bodies:
