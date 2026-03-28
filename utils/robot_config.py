@@ -44,6 +44,9 @@ _LEG_PREFIX_MAP: List[tuple[str, str]] = [
     ("front_right", "FR"),
     ("hind_left", "RL"),
     ("hind_right", "RR"),
+    # Ant
+    ("back_left", "RL"),
+    ("back_right", "RR"),
 ]
 
 # Reverse map built once at module load
@@ -121,6 +124,18 @@ def _get_robot_prefix_map(robot_name: str) -> Dict[str, str]:
             "RR": "hind_right"
         }
 
+    if "humanoid" in rn:
+        return {}
+
+    if "ant" in rn:
+        return {
+            "FL": "front_left",
+            "FR": "front_right",
+            "RL": "back_left",
+            "RR": "back_right",
+        }
+        return {}
+
     return {}
 
 
@@ -129,13 +144,15 @@ def _get_robot_prefix_map(robot_name: str) -> Dict[str, str]:
 # ---------------------------------------------------------------------------
 @dataclass
 class RobotConfig:
-    name: str                          # e.g. "unitree_go2w"
-    scene_xml: str                     # path to scene.xml
-    base_body: str                     # root body name in XML
-    calf_bodies: List[str]             # IK target body names (XML names)
-    foot_sites: List[str]              # foot site names (XML names)
-    joint_names: List[str]             # all actuated joint names (XML names)
-    leg_order: List[str]               # canonical leg order: FL FR RL RR
+    name: str
+    scene_xml: str
+    base_body: str
+    calf_bodies: List[str]
+    foot_sites: List[str]
+    joint_names: List[str]
+    leg_order: List[str]
+    hand_bodies: List[str] = field(default_factory=list)
+    hand_sites: List[str] = field(default_factory=list)   # ← add this
     wheel_radius: float = 0.0
     extra: Dict = field(default_factory=dict)
 
@@ -191,7 +208,9 @@ def load_robot_config(robot_name: str, robots_dir: str = "robots") -> RobotConfi
         calf_bodies=data["calf_bodies"],
         foot_sites=data["foot_sites"],
         joint_names=data["joint_names"],
-        leg_order=data.get("leg_order", ["FL", "FR", "RL", "RR"]),
+        leg_order=data.get("leg_order", []),
+        hand_bodies=data.get("hand_bodies", []),
+        hand_sites=data.get("hand_sites", []),  # ← add this
         wheel_radius=data.get("wheel_radius", 0.0),
         extra=data.get("extra", {}),
     )

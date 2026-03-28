@@ -1,0 +1,30 @@
+name: ant
+scene_xml: assets/ant/scene.xml
+base_body: torso
+calf_bodies:
+  - front_right_ankle
+  - front_left_ankle
+  - back_right_ankle
+  - back_left_ankle
+foot_sites:
+  - front_right_ankle
+  - front_left_ankle
+  - back_right_ankle
+  - back_left_ankle
+hand_bodies: []
+hand_sites: []
+joint_names:
+  - front_right_hip_x
+  - front_right_hip_y
+  - front_right_ankle
+  - front_left_hip_x
+  - front_left_hip_y
+  - front_left_ankle
+  - back_right_hip_x
+  - back_right_hip_y
+  - back_right_ankle
+  - back_left_hip_x
+  - back_left_hip_y
+  - back_left_ankle
+leg_order: []
+wheel_radius: 0.0

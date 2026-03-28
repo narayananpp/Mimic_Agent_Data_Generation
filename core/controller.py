@@ -49,7 +49,10 @@ class MotionControllerRunner:
         self.robot_cfg = load_robot_config(args.robot, robots_dir=robots_dir)
 
         # XML body names (as they appear in the MuJoCo model)
-        self.xml_leg_names = self.robot_cfg.calf_bodies  # e.g. ["LF_shank", ...]
+        self.xml_leg_names = (
+            self.robot_cfg.calf_bodies +
+            self.robot_cfg.hand_bodies
+        )
 
         # Canonical names used by ALL gait files (FL/FR/RL/RR)
         self.canonical_leg_names = [normalize_leg_name(n) for n in self.xml_leg_names]
@@ -71,18 +74,18 @@ class MotionControllerRunner:
         # IK Solver  (uses XML body/site names)
         # -------------------------------------------------
         from utils.kinematics import MultiLinkGradientDescentIK
+        all_sites = self.robot_cfg.foot_sites + self.robot_cfg.hand_sites
 
         self.ik = MultiLinkGradientDescentIK(
             self.model,
             self.data,
-            self.xml_leg_names,          # ← XML names
-            foot_sites=self.robot_cfg.foot_sites,
+            self.xml_leg_names,
+            foot_sites=all_sites,
             joint_names=self.robot_cfg.joint_names,
         )
 
         # -------------------------------------------------
-        # Initial foot positions in BODY FRAME
-        # Use MuJoCo's own xmat (avoids quat convention issues)
+        # Initial foot/hand positions in BODY FRAME
         # -------------------------------------------------
         base_body_id = mujoco.mj_name2id(
             self.model, mujoco.mjtObj.mjOBJ_BODY, self.robot_cfg.base_body
@@ -101,25 +104,23 @@ class MotionControllerRunner:
             pos_body = R_wb.T @ (pos_world - p_wb)
             initial_feet_body[canonical] = pos_body.copy()
 
-        print(f"[Controller] Initial foot positions (body frame):")
+        print(f"[Controller] Initial EE positions (body frame):")
         for k, v in initial_feet_body.items():
-            print(f"  {k}: {v}")
+            print(f"  {k}: {np.round(v, 4)}")
 
-            # -------------------------------------------------
-            # Motion Generator  (receives canonical leg names)
-            # -------------------------------------------------
-            Motion = get_motion_controller(args.mode, gaits_dir="gaits")
+        # -------------------------------------------------
+        # Motion Generator  (receives canonical leg names)
+        # -------------------------------------------------
+        Motion = get_motion_controller(args.mode, gaits_dir="gaits")
 
-            self.motion_gen = Motion(
-                initial_foot_positions_body=initial_feet_body,
-                leg_names=self.canonical_leg_names,  # ← canonical
-            )
+        self.motion_gen = Motion(
+            initial_foot_positions_body=initial_feet_body,
+            leg_names=self.canonical_leg_names,
+        )
 
-            # FIX: Define the variables before using them
-            root_pos = self.data.qpos[0:3].copy()
-            root_quat = self.data.qpos[3:7].copy()
-
-            self.motion_gen.reset(root_pos, root_quat)
+        root_pos = self.data.qpos[0:3].copy()
+        root_quat = self.data.qpos[3:7].copy()
+        self.motion_gen.reset(root_pos, root_quat)
 
         self.motion_gen.set_velocity_command(
             vx=getattr(args, "vx", 0.0),
@@ -163,7 +164,6 @@ class MotionControllerRunner:
         root_pos  = motion_state["root_pos"]
         root_quat = motion_state["root_quat"]
         foot_positions_world = motion_state["foot_positions_world"]
-        # foot_positions_world keyed by CANONICAL names (FL/FR/RL/RR)
 
         # Build IK target array in XML leg order
         foot_targets = np.zeros((len(self.xml_leg_names), 3))
@@ -173,13 +173,17 @@ class MotionControllerRunner:
 
         self.ik.calculate(foot_targets, debug=(self.frame % 60 == 0))
 
+        # Apply joint overrides from gait (skill-specific)
+        joint_overrides = motion_state.get("joint_overrides", {})
+        for joint_name, angle in joint_overrides.items():
+            if joint_name in self.robot_cfg.joint_names:
+                idx = self.robot_cfg.joint_names.index(joint_name)
+                self.data.qpos[7 + idx] = angle
+
         self.data.qpos[0:3] = root_pos
         self.data.qpos[3:7] = root_quat
 
         self.frame += 1
-
-        print("Foot tars", foot_targets[:, 2])
-        print("Joints", len(self.data.qpos[7:]))
 
         return {
             "time": motion_state["time"],

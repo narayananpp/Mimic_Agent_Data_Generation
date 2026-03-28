@@ -51,6 +51,17 @@ class MultiLinkGradientDescentIK:
         self.step_size = step_size
         self.tol = tol
 
+        self.qpos_ids = []
+        for jn in joint_names:
+            jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, jn)
+            if jid >= 0:
+                # jnt_qposadr is the correct index for qpos array
+                self.qpos_ids.append(model.jnt_qposadr[jid])
+        self.qpos_ids = np.array(self.qpos_ids, dtype=int)
+
+        # Store initial 'gold standard' standing pose for the null-space pull
+        self.q0 = data.qpos.copy()
+
         # ── Body IDs ────────────────────────────────────────────────────────
         self.body_ids = [
             mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, n)
@@ -104,7 +115,7 @@ class MultiLinkGradientDescentIK:
     def _dofs_heuristic(self):
         """
         Legacy fallback: assumes FL/FR/RL/RR × hip/thigh/calf naming.
-        Works for Unitree Go2W.  Will not work for ANYmal.
+        Works for Unitree Go2W. Will not work for ANYmal or humanoid.
         """
         dof_ids = []
         for leg in ["FL", "FR", "RL", "RR"]:
@@ -113,6 +124,13 @@ class MultiLinkGradientDescentIK:
                 jid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_JOINT, jn)
                 if jid >= 0:
                     dof_ids.append(self.model.jnt_dofadr[jid])
+
+        if len(dof_ids) == 0:
+            raise RuntimeError(
+                "Legacy IK heuristic found no joints. "
+                "Your robot likely uses non-FL/FR/RL/RR naming. "
+                "Provide explicit joint_names in your robot YAML."
+            )
         return np.array(dof_ids, dtype=int)
 
     # ── Forward kinematics ───────────────────────────────────────────────────
@@ -133,40 +151,91 @@ class MultiLinkGradientDescentIK:
         H = J.T @ J + (damping ** 2) * np.eye(J.shape[1])
         return np.linalg.solve(H, J.T @ dx)
 
-    def calculate(self, target_feet_pos, max_iter=500, damping=1e-3, debug=False):
-        """
-        Solve IK to place feet at target_feet_pos (N × 3, world frame).
-        Modifies self.data.qpos in-place.
-        Returns average position error (metres).
-        """
+    # def calculate(self, target_feet_pos, max_iter=500, damping=1e-3, debug=False):
+    #     """
+    #     Solve IK to place feet at target_feet_pos (N × 3, world frame).
+    #     Modifies self.data.qpos in-place.
+    #     Returns average position error (metres).
+    #     """
+    #     mujoco.mj_fwdPosition(self.model, self.data)
+    #     dq = np.zeros(self.model.nv)
+    #     avg_err = float("inf")
+    #
+    #     for it in range(max_iter):
+    #         current = self.get_foot_positions()
+    #         err = (target_feet_pos - current).flatten()
+    #         avg_err = np.linalg.norm(err) / max(len(self.site_ids), 1)
+    #         if avg_err < self.tol:
+    #             break
+    #
+    #         jacp = np.zeros((3, self.model.nv))
+    #         jacr = np.zeros((3, self.model.nv))
+    #         J_list = []
+    #         for sid, bid in zip(self.site_ids, self.body_ids):
+    #             if sid is not None:
+    #                 mujoco.mj_jacSite(self.model, self.data, jacp, jacr, sid)
+    #             else:
+    #                 mujoco.mj_jacBody(self.model, self.data, jacp, jacr, bid)
+    #             J_list.append(jacp[:, self.dof_ids].copy())
+    #
+    #         J = np.vstack(J_list)
+    #         dq_local = self.step_size * self.damped_least_squares(J, err, damping)
+    #         dq[self.dof_ids] = dq_local
+    #         mujoco.mj_integratePos(self.model, self.data.qpos, dq, 1)
+    #         mujoco.mj_fwdPosition(self.model, self.data)
+    #
+    #     if debug:
+    #         print(f"[IK] it={it:4d}  avg_err={avg_err * 1000:.2f} mm")
+    #
+    #     return avg_err
+
+    def calculate(self, target_feet_pos, max_iter=100, damping=1e-2, debug=False):
         mujoco.mj_fwdPosition(self.model, self.data)
-        dq = np.zeros(self.model.nv)
-        avg_err = float("inf")
 
         for it in range(max_iter):
             current = self.get_foot_positions()
             err = (target_feet_pos - current).flatten()
-            avg_err = np.linalg.norm(err) / max(len(self.site_ids), 1)
-            if avg_err < self.tol:
+
+            if np.linalg.norm(err) < self.tol:
                 break
 
-            jacp = np.zeros((3, self.model.nv))
-            jacr = np.zeros((3, self.model.nv))
+            # 1. Build Jacobian (using dof_ids which map to qvel/nv)
             J_list = []
+            jacp = np.zeros((3, self.model.nv))
             for sid, bid in zip(self.site_ids, self.body_ids):
                 if sid is not None:
-                    mujoco.mj_jacSite(self.model, self.data, jacp, jacr, sid)
+                    mujoco.mj_jacSite(self.model, self.data, jacp, None, sid)
                 else:
-                    mujoco.mj_jacBody(self.model, self.data, jacp, jacr, bid)
+                    mujoco.mj_jacBody(self.model, self.data, jacp, None, bid)
                 J_list.append(jacp[:, self.dof_ids].copy())
 
             J = np.vstack(J_list)
-            dq_local = self.step_size * self.damped_least_squares(J, err, damping)
-            dq[self.dof_ids] = dq_local
-            mujoco.mj_integratePos(self.model, self.data.qpos, dq, 1)
+
+            # 2. Damped Pseudo-inverse
+            lambda_sq = damping ** 2
+            J_inv = J.T @ np.linalg.inv(J @ J.T + lambda_sq * np.eye(J.shape[0]))
+
+            # 3. Primary Task: Move feet to targets
+            dq_task = J_inv @ err
+
+            # 4. Secondary Task: The "Knee Fix" (Null-space)
+            # Identity - (Pseudo-inverse * Jacobian)
+            I = np.eye(len(self.dof_ids))
+            null_space_proj = I - (J_inv @ J)
+
+            # Use the qpos_ids we created in __init__ to avoid IndexError
+            q_current = self.data.qpos[self.qpos_ids]
+            q_ref = self.q0[self.qpos_ids]
+
+            # Pull towards standing pose (0.1 is the gain/strength of the pull)
+            dq_null = null_space_proj @ (q_ref - q_current)
+            dq_total = dq_task + 0.1 * dq_null
+
+            # 5. Integrate back into simulation
+            dq_full = np.zeros(self.model.nv)
+            dq_full[self.dof_ids] = dq_total * self.step_size
+            mujoco.mj_integratePos(self.model, self.data.qpos, dq_full, 1)
             mujoco.mj_fwdPosition(self.model, self.data)
 
         if debug:
-            print(f"[IK] it={it:4d}  avg_err={avg_err * 1000:.2f} mm")
-
-        return avg_err
+            print(f"[IK] it={it:3d} | err={np.linalg.norm(err) * 1000:.2f}mm")

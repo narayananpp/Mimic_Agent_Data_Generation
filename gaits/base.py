@@ -150,6 +150,7 @@ class BaseMotionGenerator(ABC):
             "root_quat": self.root_quat.copy(),
             "foot_positions_body": feet_body,
             "foot_positions_world": feet_world,
+            "joint_overrides": {},  # ← add this, empty by default
         }
 
     # ==========================================================

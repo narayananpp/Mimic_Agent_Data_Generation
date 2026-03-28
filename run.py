@@ -4,6 +4,7 @@ from core.simulator import MujocoSimulator
 from core.controller import MotionControllerRunner
 from core.recorder import MimicKitRecorder
 from utils.robot_config import load_robot_config
+
 from pathlib import Path
 import glfw
 import sys
@@ -32,12 +33,19 @@ def main():
     print(f"[run] Mode    : {args.mode}")
 
     # --------------------------
+    # Load robot config early
+    # --------------------------
+    robots_dir = getattr(args, "robots_dir", "robots")
+    robot_cfg = load_robot_config(args.robot, robots_dir=robots_dir)
+
+    # --------------------------
     # Initialize simulator
     # --------------------------
     sim = MujocoSimulator(
         scene_path,
         init_position=args.init_position,
         sim_freq=int(args.sim_freq),
+        base_body=robot_cfg.base_body,  # ← "pelvis" for humanoid, "base" for go2
     )
 
     # --------------------------

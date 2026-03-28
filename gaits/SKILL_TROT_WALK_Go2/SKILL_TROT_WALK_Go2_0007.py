@@ -15,7 +15,7 @@ class SKILL_TROT_WALK_Go2_MotionGenerator(BaseMotionGenerator):
 
     def __init__(self, initial_foot_positions_body, leg_names):
         self.leg_names = leg_names
-        self.freq = 1.0  # 1 Hz gait frequency for stable walking
+        self.freq = 2.0  # 1 Hz gait frequency for stable walking
         
         # Gait timing parameters
         self.duty_cycle = 0.7  # 70% stance, 30% swing per leg
@@ -44,7 +44,7 @@ class SKILL_TROT_WALK_Go2_MotionGenerator(BaseMotionGenerator):
         self.root_quat = np.array([1.0, 0.0, 0.0, 0.0])
         
         # Velocity commands (constant throughout cycle)
-        self.vx_forward = 0.5  # Forward velocity (m/s) - tunable based on desired speed
+        self.vx_forward = 1.  # Forward velocity (m/s) - tunable based on desired speed
         self.vel_world = np.array([self.vx_forward, 0.0, 0.0])
         self.omega_world = np.zeros(3)  # No rotation
 

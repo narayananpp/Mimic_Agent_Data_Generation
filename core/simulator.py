@@ -42,10 +42,15 @@ class MujocoSimulator:
             self.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
             self.cam.trackbodyid = -1
 
-        self.cam.lookat[:] = [0, 0, 0.3]
-        self.cam.distance = 2
+        # self.cam.lookat[:] = [0, 0, 0.3]
+        # self.cam.distance = 2
+        # self.cam.azimuth = 90
+        # self.cam.elevation = -20
+
+        self.cam.lookat[:] = [0, 0, 0.9]  # higher for humanoid
+        self.cam.distance = 4.0
         self.cam.azimuth = 90
-        self.cam.elevation = -20
+        self.cam.elevation = -15
 
         self.opt = mujoco.MjvOption()
         self.pert = mujoco.MjvPerturb()
